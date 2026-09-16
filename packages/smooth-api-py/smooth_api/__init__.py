@@ -21,10 +21,12 @@ except ImportError:
 
 
 def _get_status_code(err: Exception) -> int | None:
-    if RequestsHTTPError and isinstance(err, RequestsHTTPError):
-        return err.response.status_code
-    if HttpxHTTPStatusError and isinstance(err, HttpxHTTPStatusError):
-        return err.response.status_code
+    if RequestsHTTPError is not None and isinstance(err, RequestsHTTPError):
+        if err.response is not None:
+            return err.response.status_code
+    if HttpxHTTPStatusError is not None and isinstance(err, HttpxHTTPStatusError):
+        if err.response is not None:
+            return err.response.status_code
     return None
 
 
