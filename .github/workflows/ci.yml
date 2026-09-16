@@ -21,12 +21,70 @@ jobs:
           filters: |
             typescript:
               - 'packages/smooth-api-ts/**'
+              - '!packages/smooth-api-ts/**/*.md'
               - 'sandbox/**'
               - '.github/workflows/ci.yml'
             python:
               - 'packages/smooth-api-py/**'
+              - '!packages/smooth-api-py/**/*.md'
               - 'sandbox/**'
               - '.github/workflows/ci.yml'
+
+  typescript-checks:
+    name: TypeScript Checks (Types & Security Audit)
+    needs: changes
+    if: ${{ needs.changes.outputs.typescript == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: 'packages/smooth-api-ts/package.json'
+
+      - name: Install TypeScript package dependencies
+        working-directory: ./packages/smooth-api-ts
+        run: npm install
+
+      - name: Type Check (tsc --noEmit)
+        working-directory: ./packages/smooth-api-ts
+        run: npx tsc --noEmit
+
+      - name: Security Audit (npm audit)
+        working-directory: ./packages/smooth-api-ts
+        run: npm audit --audit-level=high
+
+  python-checks:
+    name: Python Checks (Lint & Types)
+    needs: changes
+    if: ${{ needs.changes.outputs.python == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+          cache-dependency-path: 'packages/smooth-api-py/pyproject.toml'
+
+      - name: Install Python tools
+        working-directory: ./packages/smooth-api-py
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy -e ".[dev]"
+
+      - name: Python Lint (Ruff)
+        working-directory: ./packages/smooth-api-py
+        run: ruff check .
+
+      - name: Python Type Check (Mypy)
+        working-directory: ./packages/smooth-api-py
+        run: mypy smooth_api --ignore-missing-imports
 
   typescript-tests:
     needs: changes

@@ -19,11 +19,21 @@ examples:
 
 typescript:
   - changed-files:
-    - any-glob-to-any-file: 'packages/smooth-api-ts/**/*'
+    - all-globs-to-any-file:
+      - 'packages/smooth-api-ts/**/*'
+      - '!packages/smooth-api-ts/**/*.md'
 
 python:
   - changed-files:
-    - any-glob-to-any-file: 'packages/smooth-api-py/**/*'
+    - all-globs-to-any-file:
+      - 'packages/smooth-api-py/**/*'
+      - '!packages/smooth-api-py/**/*.md'
+
+packages:
+  - changed-files:
+    - all-globs-to-any-file:
+      - 'packages/**/*'
+      - '!packages/**/*.md'
 
 ci:
   - changed-files:

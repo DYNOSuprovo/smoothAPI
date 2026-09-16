@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import functools
 import inspect
-from urllib.parse import urlparse
 
 from .config import SmoothConfig
 from .dedup import RequestDeduplicator
