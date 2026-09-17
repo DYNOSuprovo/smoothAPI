@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import functools
 import inspect
-from urllib.parse import urlparse
+from typing import Any
 
 from .config import (
     CircuitState,
@@ -52,7 +52,7 @@ def _extract_url(args: tuple, kwargs: dict) -> str:
     if "url" in kwargs and isinstance(kwargs["url"], str):
         return kwargs["url"]
     for arg in args:
-        if isinstance(arg, str) and (arg.startswith("http://") or arg.startswith("https://") or "/" in arg):
+        if isinstance(arg, str) and (arg.startswith(("http://", "https://")) or "/" in arg):
             return arg
     if args and isinstance(args[0], str):
         return args[0]
@@ -61,9 +61,9 @@ def _extract_url(args: tuple, kwargs: dict) -> str:
 
 
 def _get_status_code(err: Exception) -> int | None:
-    if RequestsHTTPError and isinstance(err, RequestsHTTPError):
+    if RequestsHTTPError is not None and isinstance(err, RequestsHTTPError) and err.response is not None:
         return err.response.status_code
-    if HttpxHTTPStatusError and isinstance(err, HttpxHTTPStatusError):
+    if HttpxHTTPStatusError is not None and isinstance(err, HttpxHTTPStatusError):
         return err.response.status_code
     return None
 
@@ -310,5 +310,3 @@ class ResilientConfig(SmoothConfig):
     def __init__(self, *args, **kwargs):
         warnings.warn("'ResilientConfig' is deprecated, use 'SmoothConfig' instead", DeprecationWarning, stacklevel=2)
         super().__init__(*args, **kwargs)
-
-from .config import DeduplicationConfig  # re-export for convenience
