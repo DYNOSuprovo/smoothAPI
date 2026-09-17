@@ -61,10 +61,12 @@ def _extract_url(args: tuple, kwargs: dict) -> str:
 
 
 def _get_status_code(err: Exception) -> int | None:
-    if RequestsHTTPError is not None and isinstance(err, RequestsHTTPError) and err.response is not None:
-        return err.response.status_code
+    if RequestsHTTPError is not None and isinstance(err, RequestsHTTPError):
+        if err.response is not None:
+            return err.response.status_code
     if HttpxHTTPStatusError is not None and isinstance(err, HttpxHTTPStatusError):
-        return err.response.status_code
+        if err.response is not None:
+            return err.response.status_code
     return None
 
 

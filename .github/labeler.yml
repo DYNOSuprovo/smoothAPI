@@ -6,13 +6,36 @@ docs:
   - changed-files:
     - any-glob-to-any-file:
       - 'website/src/app/docs/**/*'
+      - 'docs/**/*'
       - 'README.md'
       - 'CONTRIBUTING.md'
+      - 'packages/**/*.md'
 
 examples:
   - changed-files:
-    - any-glob-to-any-file: 'examples/**/*'
+    - any-glob-to-any-file:
+      - 'examples/**/*'
+      - 'sandbox/**/*'
+
+typescript:
+  - changed-files:
+    - all-globs-to-any-file:
+      - 'packages/smooth-api-ts/**/*'
+      - '!packages/smooth-api-ts/**/*.md'
+
+python:
+  - changed-files:
+    - all-globs-to-any-file:
+      - 'packages/smooth-api-py/**/*'
+      - '!packages/smooth-api-py/**/*.md'
 
 packages:
   - changed-files:
-    - any-glob-to-any-file: 'packages/**/*'
+    - all-globs-to-any-file:
+      - 'packages/**/*'
+      - '!packages/**/*.md'
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file: '.github/**/*'
+
