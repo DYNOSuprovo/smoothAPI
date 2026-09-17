@@ -48,7 +48,11 @@ class CircuitBreakerState:
             if inspect.iscoroutine(res):
                 try:
                     loop = asyncio.get_running_loop()
-                    loop.create_task(res)
+                    task = loop.create_task(res)
+                    def _handle_task_done(t: asyncio.Task) -> None:
+                        if not t.cancelled() and t.exception():
+                            sys.stderr.write(f"[smoothAPI] Error in async onCircuitStateChange hook: {t.exception()}\n")
+                    task.add_done_callback(_handle_task_done)
                 except RuntimeError:
                     asyncio.run(res)
         except Exception as ex:

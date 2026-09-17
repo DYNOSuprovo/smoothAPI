@@ -35,7 +35,12 @@ def _safe_invoke(fn: Any, arg: Any) -> None:
         if inspect.iscoroutine(res):
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(res)
+                task = loop.create_task(res)
+                def _handle_task_done(t: asyncio.Task) -> None:
+                    if not t.cancelled() and t.exception():
+                        import sys
+                        sys.stderr.write(f"[smoothAPI] Error in async lifecycle hook: {t.exception()}\n")
+                task.add_done_callback(_handle_task_done)
             except RuntimeError:
                 asyncio.run(res)
     except Exception as ex:
@@ -44,10 +49,13 @@ def _safe_invoke(fn: Any, arg: Any) -> None:
 
 
 def _extract_url(args: tuple, kwargs: dict) -> str:
-    if args and isinstance(args[0], str):
-        return args[0]
     if "url" in kwargs and isinstance(kwargs["url"], str):
         return kwargs["url"]
+    for arg in args:
+        if isinstance(arg, str) and (arg.startswith("http://") or arg.startswith("https://") or "/" in arg):
+            return arg
+    if args and isinstance(args[0], str):
+        return args[0]
     return ""
 
 

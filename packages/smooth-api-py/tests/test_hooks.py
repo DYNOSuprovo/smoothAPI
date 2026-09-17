@@ -53,6 +53,7 @@ def test_on_retry_fires_with_correct_context_sync():
     assert first.delay_ms >= 0
     assert first.delay >= 0
     assert first.status == 500
+    assert isinstance(first.error, Exception)
     assert "call_fail" in first.domain
 
 
@@ -84,6 +85,7 @@ async def test_on_retry_fires_with_correct_context_async():
     assert first.max_retries == 2
     assert first.delay_ms >= 0
     assert first.status == 500
+    assert isinstance(first.error, Exception)
     assert first.url == f"{BASE}/always-fail"
 
 
@@ -122,6 +124,7 @@ def test_on_circuit_state_change_transitions():
     assert events[0].to_state == "OPEN"
     assert events[0].to == "OPEN"
     assert events[0].failure_count == 2
+    assert events[0].failureCount == 2
 
     # Wait for cooldown to expire
     time.sleep(0.07)
@@ -218,3 +221,47 @@ async def test_async_coroutine_hooks_support():
     await asyncio.sleep(0.05)
     assert retry_async_called is True
     assert state_async_called is True
+
+
+@pytest.mark.asyncio
+async def test_async_hook_exceptions_do_not_crash_pipeline():
+    reset()
+    called = False
+
+    async def buggy_async_hook(ctx):
+        nonlocal called
+        called = True
+        raise RuntimeError("Bug in async hook")
+
+    config = SmoothConfig(
+        backoff=BackoffConfig(max_retries=1, base_delay=0.01),
+        on_retry=buggy_async_hook,
+    )
+
+    @smooth_api(config)
+    async def call_fail():
+        resp = requests.get(f"{BASE}/always-fail")
+        resp.raise_for_status()
+        return resp
+
+    resp = await call_fail()
+    assert resp.status_code == 500
+    await asyncio.sleep(0.02)
+    assert called is True
+
+
+def test_on_retry_extracts_url_from_class_method():
+    reset()
+    calls = []
+
+    class ApiService:
+        @smooth_api(SmoothConfig(backoff=BackoffConfig(max_retries=1, base_delay=0.01), on_retry=calls.append))
+        def fetch(self, url: str):
+            resp = requests.get(url)
+            resp.raise_for_status()
+            return resp
+
+    service = ApiService()
+    service.fetch(f"{BASE}/always-fail")
+    assert len(calls) == 1
+    assert calls[0].url == f"{BASE}/always-fail"

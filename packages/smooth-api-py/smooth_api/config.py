@@ -21,6 +21,10 @@ class CircuitStateChangeEvent:
     def to(self) -> CircuitState:
         return self.to_state
 
+    @property
+    def failureCount(self) -> int:
+        return self.failure_count
+
 
 @dataclass
 class RetryContext:
